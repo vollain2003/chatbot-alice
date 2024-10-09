@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat with Alice</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="chat-container">
+        <header>
+            <h1>Chat with Alice</h1>
+        </header>
+        <div id="chat-box">
+            <!-- Messages will be displayed here -->
+        </div>
+        <div class="input-area">
+            <input type="text" id="user-input" placeholder="Type your message...">
+            <button id="send-button">Send</button>
+        </div>
+    </div>
+    
+    <script>
+        document.getElementById("send-button").onclick = sendMessage;
+        document.getElementById("user-input").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                sendMessage();
+            }
+        });
+
+        function sendMessage() {
+            var userInput = document.getElementById("user-input").value;
+            if (!userInput.trim()) return;
+
+            appendMessage("You", userInput);
+            document.getElementById("user-input").value = "";
+            
+            fetch("/chat", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ message: userInput })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === "success" && data.response) {
+                    appendMessage("Alice", data.response);
+                } else {
+                    appendMessage("Error", data.message || "An unexpected error occurred");
+                }
+            })
+            .catch(error => {
+                appendMessage("Error", "Failed to get response from server: " + error.message);
+            });
+        }
+
+        function appendMessage(sender, message) {
+            var chatBox = document.getElementById("chat-box");
+            var messageDiv = document.createElement("div");
+            messageDiv.className = "message " + sender.toLowerCase();
+            messageDiv.innerHTML = "<strong>" + sender + ":</strong> " + message;
+            chatBox.appendChild(messageDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    </script>
+</body>
+</html>
